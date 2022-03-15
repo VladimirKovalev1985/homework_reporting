@@ -1,76 +1,44 @@
-import com.codeborne.selenide.Configuration;
-import org.junit.jupiter.api.BeforeEach;
+import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.logevents.SelenideLogger;
+import io.qameta.allure.selenide.AllureSelenide;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.Keys;
 
-import static com.codeborne.selenide.Condition.exactText;
-import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.open;
-import static org.codehaus.groovy.runtime.DefaultGroovyMethods.find;
+import static com.codeborne.selenide.Condition.*;
+import static com.codeborne.selenide.Selenide.*;
 
-public class AuthTest {
+class CardDeliveryTests {
+    @BeforeAll
+    static void setUpAll() {
+        SelenideLogger.addListener("allure", new AllureSelenide());
+    }
 
-    @BeforeEach
-    void setup() {
-        open("http://localhost:9999");
+    @AfterAll
+    static void tearDownAll() {
+        SelenideLogger.removeListener("allure");
     }
 
     @Test
-    public void shouldSuccessfulLoginIfRegisteredActiveUser() {
-        //Configuration.holdBrowserOpen = true;
-        var registeredUser = DataGenerator.Registration.getRegisteredUser("active");
-        $("[data-test-id='login'] input").setValue(registeredUser.getLogin());
-        $("[data-test-id='password'] input").setValue(registeredUser.getPassword());
-        $("[data-test-id='action-login']").click();
-        $("h2").shouldBe(visible, exactText("Личный кабинет"));
-
-    }
-
-    @Test
-    public void shouldGetErrorIfNotRegisteredUser() {
-        //Configuration.holdBrowserOpen = true;
-        var registeredUser = DataGenerator.Registration.getRegisteredUser("active");
-        var notRegisteredUser = DataGenerator.getRandomLogin();
-        $("[data-test-id='login'] input").setValue(notRegisteredUser);
-        $("[data-test-id='password'] input").setValue(registeredUser.getPassword());
-        $("[data-test-id='action-login']").click();
-        $("[data-test-id='error-notification']").shouldBe(visible).find(String.valueOf(exactText("Ошибка")));
-
-    }
-
-    @Test
-    public void shouldGetErrorIfBlockedUser() {
-        //Configuration.holdBrowserOpen = true;
-        var registeredUser = DataGenerator.Registration.getRegisteredUser("blocked");
-        $("[data-test-id='login'] input").setValue(registeredUser.getLogin());
-        $("[data-test-id='password'] input").setValue(registeredUser.getPassword());
-        $("[data-test-id='action-login']").click();
-        $("[data-test-id='error-notification']").shouldBe(visible).find(String.valueOf
-                (exactText("Пользователь заблокирован")));
-    }
-
-    @Test
-    public void shouldGetErrorIfWrongLogin() {
-        //Configuration.holdBrowserOpen = true;
-        var registeredUser = DataGenerator.Registration.getRegisteredUser("active");
-        var wrongLogin = DataGenerator.getRandomLogin();
-        $("[data-test-id='login'] input").setValue(wrongLogin);
-        $("[data-test-id='password'] input").setValue("registeredUser");
-        $("[data-test-id='action-login']").click();
-        $("[data-test-id='error-notification']").shouldBe(visible).find(String.valueOf(exactText("Ошибка")));
-    }
-
-    @Test
-    public void shouldGetErrorIfWrongPassword() {
-        Configuration.holdBrowserOpen = true;
-        var registeredUser = DataGenerator.Registration.getRegisteredUser("active");
-        var wrongPassword = DataGenerator.getRandomPassword();
-        $("[data-test-id='login'] input").setValue(registeredUser.getLogin());
-        $("[data-test-id='password'] input").setValue(wrongPassword);
-        $("[data-test-id='action-login']").click();
-        $("[data-test-id='error-notification']").shouldBe(visible).find(String.valueOf(exactText("Ошибка")));
-
+    public void shouldSendForm() {
+        open("http://localhost:9999/");
+        $("[data-test-id=city] input").setValue(Generator.generateCity("ru"));
+        $("[data-test-id=date] input").doubleClick().sendKeys(Keys.BACK_SPACE);
+        $("[data-test-id=date] input").setValue(Generator.generateDate(3));
+        $("[data-test-id=name] input").setValue(Generator.generateName("ru"));
+        $("[data-test-id=phone] input").setValue(Generator.generatePhone("ru"));
+        $("[data-test-id=agreement]").click();
+        $$("button").find(exactText("Запланировать")).click();
+        $(".notification__content").shouldBe(visible,
+                exactText("Встреча успешно запланирована на " + Generator.generateDate(3)));
+        $("[data-test-id=date] input").doubleClick().sendKeys(Keys.BACK_SPACE);
+        $("[data-test-id=date] input").setValue(Generator.generateDate(4));
+        $$("button").find(exactText("Запланировать")).click();
+        $("[data-test-id=replan-notification]").shouldBe(visible);
+        $$("button").find(exactText("Перепланировать")).click();
+        $(".notification__content ").shouldBe(visible,
+                exactText("Встреча успешно запланирована на " + Generator.generateDate(4)));
 
     }
 }
-

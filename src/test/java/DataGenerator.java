@@ -1,67 +1,31 @@
 import com.github.javafaker.Faker;
 
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.filter.log.LogDetail;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
-import lombok.AllArgsConstructor;
-import lombok.Value;
-import lombok.val;
-
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-import static io.restassured.RestAssured.given;
-
-public class DataGenerator {
-    private static final RequestSpecification requestSpec = new RequestSpecBuilder()
-            .setBaseUri("http://localhost")
-            .setPort(9999)
-            .setAccept(ContentType.JSON)
-            .setContentType(ContentType.JSON)
-            .log(LogDetail.ALL)
-            .build();
-    private static final Faker faker = new Faker(new Locale("en"));
-
-    private DataGenerator() {
-
+class Generator {
+    private Generator() {
     }
 
-    public static void setRequest(RegistrationDto user) {
-        given() // "дано"
-                .spec(requestSpec) // указываем, какую спецификацию используем
-                .body(user) // передаём в теле объект, который будет преобразован в JSON
-                .when() // "когда"
-                .post("/api/system/users") // на какой путь, относительно BaseUri отправляем запрос
-                .then() // "тогда ожидаем"
-                .statusCode(200); // код 200 OK
+    private static Faker faker = new Faker(new Locale("ru"));
+
+    public static String generateDate(int days) {
+        return LocalDate.now().plusDays(days).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 
-    public static String getRandomLogin() {
-
-        return faker.name().username();
+    public static String generateCity(String locale) {
+        String[] Cities = new String[]{"Санкт-Петербург", "Омск", "Новосибирск", "Уфа", "Москва"};
+        int city = (int) Math.floor(Math.random() * Cities.length);
+        return Cities[city];
     }
 
-    public static String getRandomPassword() {
-
-        return faker.internet().password();
+    public static String generateName(String locale) {
+        return faker.name().fullName();
     }
 
-    public static class Registration {
-        private Registration() {
-
-        }
-
-        public static RegistrationDto getUser(String status) {
-            RegistrationDto user = new RegistrationDto(getRandomLogin(), getRandomPassword(), status);
-            return user;
-        }
-
-        public static RegistrationDto getRegisteredUser(String status) {
-            RegistrationDto registeredUser = getUser(status);
-            setRequest(registeredUser);
-            return registeredUser;
-
-
-        }
+    public static String generatePhone(String locale) {
+        return faker.phoneNumber().phoneNumber();
     }
+
 }
